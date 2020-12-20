@@ -269,9 +269,9 @@ def forward_backward(graph, features, blankTokenId, delayConstraint=-1, name='')
     operation that determines the exact forward/backward procedure.
 
     Example:
-            graph = cntk.labels_to_graph(labels)
-            networkOut = model(features)
-            fb = C.forward_backward(graph, networkOut, 132)
+        graph = cntk.labels_to_graph(labels)
+        networkOut = model(features)
+        fb = C.forward_backward(graph, networkOut, 132)
 
     This op requires that both graph and features have the same dynamic sequence axis (i.e. same sequence length).
 
@@ -330,8 +330,7 @@ def forward_backward(graph, features, blankTokenId, delayConstraint=-1, name='')
         labels_graph = cntk.labels_to_graph(labels_var)
         network_out = model(input_var)
         fb = forward_backward(labels_graph, network_out, 5)
-        fb.eval({'input': input.astype(np.float32),
-                 'label': expanded_labels.astype(np.float32)})
+        fb.eval({'input': input.astype(np.float32), 'label': expanded_labels.astype(np.float32)})
 
     Args:
         graph: labels graph
@@ -664,7 +663,7 @@ def local_response_normalization(operand, depth_radius, bias, alpha, beta, name=
 
     The mathematical equation is:
 
-    ``b_{x,y}^i=a_{x,y}^i/(bias+\alpha\sum_{j=max(0,i-depth_radius)}^{min(N-1, i+depth_radius)}(a_{x,y}^j)^2)^\beta``
+    ``b_{x,y}^i=a_{x,y}^i/(bias+\\alpha\\sum_{j=max(0,i-depth_radius)}^{min(N-1, i+depth_radius)}(a_{x,y}^j)^2)^\\beta``
 
     where a_{x,y}^i is the activity of a neuron computed by applying kernel i at position (x,y)
     N is the total number of kernels, depth_radius is half normalization width.
@@ -1558,7 +1557,7 @@ def softplus(x, steepness=1, name=''):
     '''
     Softplus operation. Computes the element-wise softplus of ``x``:
 
-    :math:`\mathrm{softplus}(x) = {\log(1+\exp(x))}`
+    :math:`\\mathrm{softplus}(x) = {\\log(1+\\exp(x))}`
 
     The optional ``steepness`` allows to make the knee sharper (``steepness>1``) or softer, by computing
     ``softplus(x * steepness) / steepness``.
@@ -1594,7 +1593,7 @@ def softsign(x, steepness=1, name=''):
     '''
     Computes the element-wise softsign of ``x``:
 
-    :math:`sigmoid(x) = {x \over {1+\abs(x)}}`
+    :math:`sigmoid(x) = {x \\over {1+\\abs(x)}}`
 
     The output tensor has the same shape as ``x``.
 
@@ -1617,7 +1616,7 @@ def sigmoid(x, name=''):
     '''
     Computes the element-wise sigmoid of ``x``:
 
-    :math:`sigmoid(x) = {1 \over {1+\exp(-x)}}`
+    :math:`sigmoid(x) = {1 \\over {1+\\exp(-x)}}`
 
     The output tensor has the same shape as ``x``.
 
@@ -2032,7 +2031,7 @@ def exp(x, name=''):
     '''
     Computes the element-wise exponential of ``x``:
 
-    :math:`\exp(x) = {e^x}`
+    :math:`\\exp(x) = {e^x}`
 
     Example:
         >>> C.exp([0., 1.]).eval()
@@ -2080,7 +2079,7 @@ def sqrt(x, name=''):
     '''
     Computes the element-wise square-root of ``x``:
 
-    :math:`sqrt(x) = {\sqrt[2]{x}}`
+    :math:`sqrt(x) = {\\sqrt[2]{x}}`
 
     Example:
         >>> C.sqrt([0., 4.]).eval()
@@ -2907,8 +2906,10 @@ def gather(reference, indices, axis=None, name=''):
         :class:`~cntk.ops.functions.Function`
     '''
     from cntk.cntk_py import gather_op
-    indices = sanitize_input(indices)
-    reference = sanitize_input(reference)
+    dtype = get_data_type(reference)
+    indices = sanitize_input(indices, dtype)
+    reference = sanitize_input(reference, dtype)
+
     if axis is None:
         return gather_op(indices, reference, name)
     else:
