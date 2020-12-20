@@ -8,7 +8,6 @@ import os
 import re
 import numpy as np
 import sys
-import pytest
 
 abs_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,8 +19,6 @@ notebook = os.path.join(abs_path, "..", "..", "..", "..", "Tutorials", "CNTK_106
 notebook_timeoutSeconds = 1800
 
 def test_cntk_106B_lstm_timeseries_with_iot_data_noErrors(nb):
-    if os.getenv("OS")=="Windows_NT" and sys.version_info[0] == 2:
-        pytest.skip('tests with Python 2.7 on Windows are not stable in the CI environment. ')
     errors = [output for cell in nb.cells if 'outputs' in cell
               for output in cell['outputs'] if output.output_type == "error"]
     assert errors == []
@@ -29,8 +26,6 @@ def test_cntk_106B_lstm_timeseries_with_iot_data_noErrors(nb):
 expectedEvalErrorByDeviceId = { -1: 0.000076, 0: 0.000076 }
 
 def test_cntk_106B_lstm_timeseries_with_iot_data_evalCorrect(nb, device_id):
-    if os.getenv("OS")=="Windows_NT" and sys.version_info[0] == 2:
-        pytest.skip('tests with Python 2.7 on Windows are not stable in the CI environment. ')
     testCell = [cell for cell in nb.cells
                 if cell.cell_type == 'code' and re.search('# Print the test error', cell.source)]
     assert len(testCell) == 1

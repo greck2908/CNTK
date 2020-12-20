@@ -273,9 +273,9 @@ namespace CNTK
         /// <param name="modelBuffer"></param>
         /// <param name="computeDevice"></param>
         /// <returns></returns>
-        public static Function Load(byte[] modelBuffer, DeviceDescriptor computeDevice, ModelFormat format = ModelFormat.CNTKv2)
+        public static Function Load(byte[] modelBuffer, DeviceDescriptor computeDevice)
         {
-            return _Load(modelBuffer, (uint)modelBuffer.Length, computeDevice, format);
+            return _Load(modelBuffer, (uint)modelBuffer.Length, computeDevice);
         }
 
         /// <summary>

@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "V2SimpleDistGradAggregator.h"
+
 #include "AccumulatorAggregation.h"
 #include "Basics.h"
 #include "DataReader.h"
@@ -16,7 +18,7 @@
 #include "ProgressTracing.h"
 #include "DistGradHeader.h"
 #include "IDistGradAggregator.h"
-#include "SimpleDistGradAggregatorHelper.h"
+#include "SimpleDistGradAggregator.h"
 #include "Criterion.h"
 #include "Globals.h"
 
@@ -108,10 +110,9 @@ public:
         if (numSubminibatchesNeeded > 1)
             smbDispatcher.Init(m_net, learnableNodes, criterionNodes, evalNodes);
 
-        shared_ptr<CriterionAccumulatorBase> localEpochEvalErrorsPtr = CriterionAccumulatorFactory::CreateCriterionAccumulator<ElemType>(
+        CriterionAccumulator<ElemType> localEpochEvalErrors(
             evalNodes, m_net->GetDeviceId(),
             {evalNodesWhichAccumulateResult.begin(), evalNodesWhichAccumulateResult.end()});
-        CriterionAccumulatorBase& localEpochEvalErrors = *localEpochEvalErrorsPtr;
 
         const size_t numIterationsBeforePrintingProgress = 100;
         size_t numItersSinceLastPrintOfProgress = 0;
@@ -166,7 +167,10 @@ public:
                         DistGradHeader::Destroy(ptr);
                     });
 
-                    m_distGradAgg = GetSimpleDistGradAggregator<ElemType>(m_mpi, false /*useAsyncAggregation*/, m_net->GetDeviceId(), 0 /*syncStatsTrace*/);
+                    if (Globals::UseV2Aggregator())
+                        m_distGradAgg = make_shared<V2SimpleDistGradAggregator<ElemType>>(m_mpi, false /*useAsyncAggregation*/, m_net->GetDeviceId(), 0 /*syncStatsTrace*/, ::CNTK::MPICommunicator());
+                    else 
+                        m_distGradAgg = make_shared<SimpleDistGradAggregator<ElemType>>(m_mpi, false /*useAsyncAggregation*/, m_net->GetDeviceId(), 0 /*syncStatsTrace*/);
                 }
 
                 m_gradHeader->numEvalNode = evalNodes.size();

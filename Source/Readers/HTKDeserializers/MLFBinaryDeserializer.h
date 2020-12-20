@@ -27,6 +27,5 @@ namespace CNTK {
 
     private:
         class BinarySequenceChunk;
-        class BinaryFrameChunk;
     };
 }

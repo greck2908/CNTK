@@ -269,11 +269,10 @@ public:
     }
 
     // ProcessOptionalParameters - Process the optional parameters of a node
-    virtual void ProcessOptionalParameters(NDLNode<ElemType>* node) override
+    virtual void ProcessOptionalParameters(NDLNode<ElemType>* node)
     {
         vector<NDLNode<ElemType>*> params = node->GetParameters(true); // get all the optional parameters only
-        ComputationNodeBase* compNodePtr = (ComputationNodeBase *) (node->GetEvalValue());
-        ComputationNodeBasePtr compNode = compNodePtr ? compNodePtr->shared_from_this() : nullptr;
+        auto compNode = ComputationNode<ElemType>::FromVoidPtr(node->GetEvalValue());
         std::string empty;
 
         // loop through all the optional parameters processing them as necessary
@@ -501,9 +500,7 @@ public:
             }
         }
 
-        // workaround for VS2017 15.9.2 Debug Win32 Access Violation error.
-        wstring networkConfigWstring = networkConfig;
-        Init(executionEngine, networkConfigWstring, newConfig, dumpFileName, deviceId);
+        Init(executionEngine, networkConfig, newConfig, dumpFileName, deviceId);
     }
 
     virtual ~NDLBuilder()
@@ -583,7 +580,6 @@ private:
     DEVICEID_TYPE m_deviceId;
 };
 
-template class NDLBuilder<half>;
 template class NDLBuilder<float>;
 template class NDLBuilder<double>;
 

@@ -25,8 +25,7 @@ using namespace std; // ugh! TODO: get rid of this from .h files!!!
 
 #define CNTK_CHECKPOINT_VERSION_1 1     // 1 -> no version number 
 #define CNTK_CHECKPOINT_VERSION_2 2      
-#define CNTK_CHECKPOINT_VERSION_3 3     // float smoothed gradients for float16/half parameters
-#define CURRENT_CNTK_CHECKPOINT_VERSION CNTK_CHECKPOINT_VERSION_3
+#define CURRENT_CNTK_CHECKPOINT_VERSION CNTK_CHECKPOINT_VERSION_2
 
 namespace CNTK { namespace Internal {
     // Forward declarations.
@@ -56,8 +55,7 @@ enum class GradientsUpdateType : int
     None,
     AdaGrad,
     RmsProp,
-    FSAdaGrad,
-    Adam
+    FSAdaGrad
 };
 
 // modelParallelSGD can be combined with dataParallelSGD/modelAveragingSGD/blockMomentumSGD 
@@ -92,21 +90,6 @@ struct RMSPropInfo
         min = 0.1;
     }
 };
-
-struct AdamInfo
-{
-    double meanMomentum; //beta_1
-    double varMomentum;  //beta_2
-    double epsilon;
-
-    AdamInfo()
-    {
-        meanMomentum = 0.9;
-        varMomentum = 0.999;
-        epsilon = pow(10, -8);
-    }
-};
-
 
 struct GradientUpdateInfo
 {
@@ -271,7 +254,6 @@ protected:
 
     GradientUpdateInfo m_gradType;
     RMSPropInfo m_rpi;
-    AdamInfo m_adam;
 
     size_t m_numMBsToShowResult = 0;
     size_t m_firstMBsToShowResult = 0;
@@ -345,8 +327,6 @@ protected:
     // true: disable Regularization
     // false: enable Regularization (default)
     bool m_disableRegInBatchNormalization;
-
-    bool m_useFP16AllReduce;
 };
 
 template <class ElemType>
@@ -443,7 +423,7 @@ protected:
                                   const std::vector<ComputationNodeBasePtr>& evaluationNodes,
                                   StreamMinibatchInputs* inputMatrices,
                                   const std::list<ComputationNodeBasePtr>& learnableNodes,
-                                  std::list<MatrixBasePtr>& smoothedGradients, std::vector<double> smoothedCounts,
+                                  std::list<Matrix<ElemType>>& smoothedGradients, std::vector<double> smoothedCounts,
                                   const bool learnRateInitialized,
                                   const double largestPrevLearnRatePerSample);
 
@@ -459,7 +439,7 @@ protected:
                                          const std::vector<ComputationNodeBasePtr>& evaluationNodes,
                                          StreamMinibatchInputs* inputMatrices,
                                          const std::list<ComputationNodeBasePtr>& learnableNodes,
-                                         std::list<MatrixBasePtr>& smoothedGradients, std::vector<double> smoothedCounts,
+                                         std::list<Matrix<ElemType>>& smoothedGradients, std::vector<double> smoothedCounts,
                                          /*out*/ EpochCriterion& epochCriterion,
                                          /*out*/ std::vector<EpochCriterion>& epochEvalErrors,
                                          std::string prefixMsg,
@@ -479,7 +459,7 @@ protected:
                                    const std::vector<ComputationNodeBasePtr>& evaluationNodes,
                                    StreamMinibatchInputs* inputMatrices,
                                    const std::list<ComputationNodeBasePtr>& learnableNodes,
-                                   std::list<MatrixBasePtr>& smoothedGradients, std::vector<double> smoothedCounts,
+                                   std::list<Matrix<ElemType>>& smoothedGradients, std::vector<double> smoothedCounts,
                                    const double learningRateAdjustmentFactor);
 
     // uses a small percentage of training data of minibatch to
@@ -497,7 +477,7 @@ protected:
                                       const std::vector<ComputationNodeBasePtr>& evaluationNodes,
                                       StreamMinibatchInputs* inputMatrices,
                                       const std::list<ComputationNodeBasePtr>& learnableNodes,
-                                      std::list<MatrixBasePtr>& smoothedGradients, std::vector<double> smoothedCounts,
+                                      std::list<Matrix<ElemType>>& smoothedGradients, std::vector<double> smoothedCounts,
                                       const size_t minMinibatchSize, const size_t maxMinibatchSize);
 
     // Attempts to compute the error signal for the whole utterance, which will
@@ -524,7 +504,7 @@ protected:
                          const std::vector<ComputationNodeBasePtr>& evaluationNodes,
                          StreamMinibatchInputs* inputMatrices,
                          const std::list<ComputationNodeBasePtr>& learnableNodes,
-                         std::list<MatrixBasePtr>& smoothedGradients, std::vector<double>& smoothedCounts,
+                         std::list<Matrix<ElemType>>& smoothedGradients, std::vector<double>& smoothedCounts,
                          /*out*/ EpochCriterion& epochCriterion,
                          /*out*/ std::vector<EpochCriterion>& epochEvalErrors,
                          const std::string& prefixMsg = "",
@@ -535,37 +515,26 @@ protected:
 
     void InitDistGradAgg(int numEvalNodes, int numGradientBits, int deviceId, int traceLevel);
     void InitModelAggregationHandler(int traceLevel, DEVICEID_TYPE devID);
-private:
+public:
     // UpdateWeights() - actual weight update, implementing various update rules
     void UpdateWeights(Matrix<ElemType>& functionValues, Matrix<ElemType>& gradientValues,
-        MatrixBasePtr& smoothedGradient, double& smoothedCount,
-        const double learnRatePerSample, const double momentumPerSample,
-        size_t actualMBSize,
-        const double L2RegWeight, const double L1RegWeight,
-        const bool needAveMultiplier,
-        const bool useNesterovMomentum) const;
-
-    template<class ElemType2 = ElemType>
-    void TypedUpdateWeights(Matrix<ElemType2>& functionValues, Matrix<ElemType2>& gradientValues,
-                       Matrix<ElemType2>& smoothedGradient, double& smoothedCount,
+                       Matrix<ElemType>& smoothedGradient, double& smoothedCount,
                        const double learnRatePerSample, const double momentumPerSample,
                        size_t actualMBSize,
                        const double L2RegWeight, const double L1RegWeight,
                        const bool needAveMultiplier,
                        const bool useNesterovMomentum) const;
-public:
     // return -1 if nothing exists
     int DetermineStartEpoch(const bool makeMode);
 
     wstring GetModelNameForEpoch(const int epoch, bool bLastModel = false) const;
 
 protected:
-    template<class ElemType2 = ElemType>
-    void ClipGradient(Matrix<ElemType2>& gradient, const size_t actualMBSize) const;
+    void ClipGradient(Matrix<ElemType>& gradient, const size_t actualMBSize) const;
 
     void SaveCheckPointInfo(const size_t epoch, const size_t totalSamplesSeen, // TODO: combine totalSamplesSeen and prevCriterion into a EpochCriterion type
                             const double learnRatePerSample,
-                            const std::list<MatrixBasePtr>& smoothedGradients,
+                            const std::list<Matrix<ElemType>>& smoothedGradients,
                             const std::vector<double>& smoothedCounts,
                             const double prevCriterion,
                             const size_t minibatchSize);
@@ -573,14 +542,14 @@ protected:
     bool TryLoadCheckPointInfo(const size_t epochNumber,
                                /*out*/ size_t& totalSamplesSeen,
                                /*out*/ double& learnRatePerSample,
-                               std::list<MatrixBasePtr>& smoothedGradients,
+                               std::list<Matrix<ElemType>>& smoothedGradients,
                                std::vector<double>& smoothedCounts,
                                /*out*/ double& prevCriterion,
                                /*out*/ size_t& minibatchSize);
     void LoadCheckPointInfo(const size_t epochNumber,
                             /*out*/ size_t& totalSamplesSeen,
                             /*out*/ double& learnRatePerSample,
-                            std::list<MatrixBasePtr>& smoothedGradients,
+                            std::list<Matrix<ElemType>>& smoothedGradients,
                             std::vector<double>& smoothedCounts,
                             /*out*/ double& prevCriterion,
                             /*out*/ size_t& minibatchSize);

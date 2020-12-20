@@ -1,5 +1,4 @@
-# Windows Server 2016
-FROM microsoft/windowsservercore:1607
+FROM microsoft/windowsservercore
 
 WORKDIR c:/local
 

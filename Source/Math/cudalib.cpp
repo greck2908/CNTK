@@ -22,8 +22,6 @@
 #pragma comment(lib, "cudart.lib") // link CUDA runtime
 #pragma comment(lib, "cublas.lib")
 
-#pragma warning(disable : 4505) // 'function' : unreferenced local function has been removed
-
 namespace msra { namespace cuda {
 
 static int devicesallocated = -1; // -1 means not initialized

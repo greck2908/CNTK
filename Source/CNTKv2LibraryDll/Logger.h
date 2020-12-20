@@ -9,15 +9,17 @@
 #include "core/common/logging/isink.h"
 
 namespace CNTK {
-class CNTKClogSink : public onnxruntime::logging::ISink {
+class CNTKClogSink : public onnxruntime::Logging::ISink {
 public:
     CNTKClogSink()
         : stream_{&(std::clog)}, flush_{true}
     {}
 
-    void SendImpl(const onnxruntime::logging::Timestamp &timestamp, 
-        const std::string &logger_id, const onnxruntime::logging::Capture &message) override
+    void SendImpl(const onnxruntime::Logging::Timestamp &timestamp, 
+        const std::string &logger_id, const onnxruntime::Logging::Capture &message) override
     {
+        UNUSED_PARAMETER(timestamp);
+
         std::ostringstream msg;
 
         msg << " [" << message.SeverityPrefix() << ":" << message.Category() << ":" << logger_id << ", "

@@ -1775,7 +1775,6 @@ shared_ptr<ComputationNode<ElemType>> SimpleNetworkBuilder<ElemType>::AddTrainAn
     return output;
 }
 
-template class SimpleNetworkBuilder<half>;
 template class SimpleNetworkBuilder<float>;
 template class SimpleNetworkBuilder<double>;
 
